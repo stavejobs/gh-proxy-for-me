@@ -1,36 +1,36 @@
 // Cloudflare Workers GitHub Proxy Script with Domestic Mirror Support
 
 addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
-})
+  event.respondWith(handleRequest(event.request));
+});
 
 async function handleRequest(request) {
-    const url = new URL(request.url);
-    const githubApiUrl = `https://api.github.com${url.pathname}`;
+  const url = new URL(request.url);
 
-    // Handle any domestic mirror
-    if (url.hostname === 'your-domestic-mirror.com') {
-        url.hostname = 'api.github.com'; // change to GitHub API endpoint
-    }
+  // Set up domestic mirror sources
+  const mirrors = [
+    'https://mirror1.example.com',
+    'https://mirror2.example.com'
+  ];
 
-    const modifiedRequest = new Request(githubApiUrl, {
-        method: request.method,
-        headers: {  
-            'User-Agent': 'Cloudflare Workers GitHub Proxy',
-            'Authorization': request.headers.get('Authorization'),
-            'Accept': 'application/vnd.github.v3+json',
-            // Include other headers as needed
-        },
-    });
+  // Build the mirror URL
+  const targetUrl = `${mirrors[Math.floor(Math.random() * mirrors.length)]}${url.pathname}`;
 
-    const response = await fetch(modifiedRequest);
-    const responseBody = await response.text();
+  const options = {
+    method: request.method,
+    headers: {
+      ...request.headers,
+      'Origin': url.origin, // Set the Origin header for CORS
+      'Access-Control-Allow-Origin': '*', // Allow all CORS origins
+    },
+  };
 
-    return new Response(responseBody, {
-        status: response.status,
-        headers: {  
-            'Content-Type': response.headers.get('Content-Type'),
-            // Include any other headers you want to pass through
-        },
-    });
+  // Forward the request to the mirror
+  const response = await fetch(targetUrl, options);
+
+  // Modify the response if necessary
+  const newResponse = new Response(response.body, response);
+  newResponse.headers.set('Access-Control-Allow-Origin', '*'); // Allow all CORS origins
+
+  return newResponse;
 }
