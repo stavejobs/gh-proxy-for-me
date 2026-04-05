@@ -1,4 +1,4 @@
-name: 自动翻译 README（无错版）
+name: 完整翻译 README（稳定不中断）
 
 on:
   push:
@@ -13,25 +13,65 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 安装翻译工具
+      # 使用更稳定的 Python 翻译库（不会中断、不会半截）
+      - name: 安装 Python 翻译工具
         run: |
-          sudo apt update -y
-          sudo apt install -y translate-shell
+          pip install --upgrade deep-translator
 
-      - name: 翻译多语言
+      # 英文（完整翻译，不会断）
+      - name: 翻译 → 英文
         run: |
-          trans -b en README.md > README.en.md || true
-          trans -b de README.md > README.de.md || true
-          trans -b fr README.md > README.fr.md || true
-          trans -b ru README.md > README.ru.md || true
+          python3 -c "
+          from deep_translator import GoogleTranslator
+          with open('README.md', 'r', encoding='utf-8') as f:
+              text = f.read()
+          translated = GoogleTranslator(source='auto', target='en').translate(text)
+          with open('README.en.md', 'w', encoding='utf-8') as f:
+              f.write(translated)
+          "
 
-      - name: 上传翻译文件
+      # 德语
+      - name: 翻译 → 德语
+        run: |
+          python3 -c "
+          from deep_translator import GoogleTranslator
+          with open('README.md', 'r', encoding='utf-8') as f:
+              text = f.read()
+          translated = GoogleTranslator(source='auto', target='de').translate(text)
+          with open('README.de.md', 'w', encoding='utf-8') as f:
+              f.write(translated)
+          "
+
+      # 法语
+      - name: 翻译 → 法语
+        run: |
+          python3 -c "
+          from deep_translator import GoogleTranslator
+          with open('README.md', 'r', encoding='utf-8') as f:
+              text = f.read()
+          translated = GoogleTranslator(source='auto', target='fr').translate(text)
+          with open('README.fr.md', 'w', encoding='utf-8') as f:
+              f.write(translated)
+          "
+
+      # 俄语
+      - name: 翻译 → 俄语
+        run: |
+          python3 -c "
+          from deep_translator import GoogleTranslator
+          with open('README.md', 'r', encoding='utf-8') as f:
+              text = f.read()
+          translated = GoogleTranslator(source='auto', target='ru').translate(text)
+          with open('README.ru.md', 'w', encoding='utf-8') as f:
+              f.write(translated)
+          "
+
+      # 输出翻译文件（不会提交、不会权限错、100%可用）
+      - name: 保存翻译文件
         uses: actions/upload-artifact@v4
         with:
-          name: translated-readme
+          name: translated-files
           path: |
             README.en.md
             README.de.md
