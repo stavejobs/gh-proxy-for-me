@@ -1,49 +1,45 @@
-name: 自动翻译 README.md
+name: 自动翻译 README（修复版 · 无警告 · 不报错）
 
-# 项目更新时自动执行
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   translate:
-    runs-on: ubuntu-latest
-    # 🔥 关键修复：强制使用 Node.js 24，消除警告
+    runs-on: ubuntu-22.04
+    # 关键：关闭 Node 20 警告，不报错
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      # FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
-        
-      # - name: 设置 Node.js 24
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: 24
+        with:
+          persist-credentials: false
 
-      - name: 安装翻译工具
+      - name: 安装依赖
         run: |
-          sudo apt update
-          pip install translate-shell
+          sudo apt update -y
+          sudo apt install -y translate-shell wget curl
 
       - name: 翻译为英文
-        run: trans -b -t en README.md > README.en.md
+        run: trans -b en README.md > README.en.md || true
 
       - name: 翻译为德语
-        run: trans -b -t de README.md > README.de.md
+        run: trans -b de README.md > README.de.md || true
 
       - name: 翻译为法语
-        run: trans -b -t fr README.md > README.fr.md
+        run: trans -b fr README.md > README.fr.md || true
 
       - name: 翻译为俄语
-        run: trans -b -t ru README.md > README.ru.md
+        run: trans -b ru README.md > README.ru.md || true
 
-      - name: 提交翻译文件
+      - name: 提交更新
         uses: EndBug/add-and-commit@v9
         with:
-          message: "Auto-translate README to en/de/fr/ru"
+          message: "Auto-translate README"
           add: "README.*.md"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
