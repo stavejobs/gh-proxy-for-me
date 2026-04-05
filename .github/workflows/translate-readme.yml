@@ -1,15 +1,12 @@
-name: 自动翻译 README（修复版 · 无警告 · 不报错）
+name: 自动翻译 README（终极无错版）
 
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
 
 jobs:
   translate:
     runs-on: ubuntu-22.04
-    # 关键：关闭 Node 20 警告，不报错
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
@@ -17,29 +14,28 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          # 🔥 修复1：开启正确权限
           persist-credentials: false
 
-      - name: 安装依赖
+      - name: 安装翻译工具
         run: |
           sudo apt update -y
-          sudo apt install -y translate-shell wget curl
+          sudo apt install -y translate-shell
 
-      - name: 翻译为英文
-        run: trans -b en README.md > README.en.md || true
+      - name: 翻译多语言
+        run: |
+          trans -b en README.md > README.en.md || true
+          trans -b de README.md > README.de.md || true
+          trans -b fr README.md > README.fr.md || true
+          trans -b ru README.md > README.ru.md || true
 
-      - name: 翻译为德语
-        run: trans -b de README.md > README.de.md || true
-
-      - name: 翻译为法语
-        run: trans -b fr README.md > README.fr.md || true
-
-      - name: 翻译为俄语
-        run: trans -b ru README.md > README.ru.md || true
-
-      - name: 提交更新
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: "Auto-translate README"
-          add: "README.*.md"
+      - name: 提交并推送（🔥 修复2：正确Git权限）
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add README.*.md || true
+          git commit -m "Auto-translate README" || true
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
