@@ -1,4 +1,4 @@
-name: 自动翻译 README（终极无错版）
+name: 自动翻译 README（无错版）
 
 on:
   push:
@@ -11,12 +11,10 @@ jobs:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
-      - name: 拉取代码
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          # 🔥 修复1：开启正确权限
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 安装翻译工具
         run: |
@@ -30,12 +28,12 @@ jobs:
           trans -b fr README.md > README.fr.md || true
           trans -b ru README.md > README.ru.md || true
 
-      - name: 提交并推送（🔥 修复2：正确Git权限）
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add README.*.md || true
-          git commit -m "Auto-translate README" || true
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 上传翻译文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: translated-readme
+          path: |
+            README.en.md
+            README.de.md
+            README.fr.md
+            README.ru.md
