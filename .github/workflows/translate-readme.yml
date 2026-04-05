@@ -1,0 +1,41 @@
+name: 自动翻译 README.md
+
+on:
+  push:
+    branches: [ main ]  # 主分支更新就触发
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 安装翻译工具
+        run: |
+          sudo apt update
+          pip install translate-shell
+
+      - name: 翻译为英文
+        run: trans -b -t en README.md > README.en.md
+
+      - name: 翻译为德语
+        run: trans -b -t de README.md > README.de.md
+
+      - name: 翻译为法语
+        run: trans -b -t fr README.md > README.fr.md
+
+      - name: 翻译为俄语
+        run: trans -b -t ru README.md > README.ru.md
+
+      - name: 提交翻译文件
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: "Auto-translate README to en/de/fr/ru"
+          add: "README.*.md"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
